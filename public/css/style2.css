@@ -1,0 +1,28 @@
+.input-group{
+	margin:10px;
+}
+
+.products{
+	padding:0;
+	display: inline-block;
+}
+
+.button {
+	margin-left: 25%;
+	margin-right: 60%;
+}
+
+.card {
+	margin: 10px;
+}
+.submit{
+	margin-top:10px;
+}
+
+.inline{
+	display: inline-block;
+}
+
+.search {
+	padding:2% 0;
+}
