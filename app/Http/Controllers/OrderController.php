@@ -22,7 +22,7 @@ class OrderController extends Controller
     	// products collection and quantity array forge
     	$this->validate(request(),[
     		'products.*' => 'required|exists:products,name',
-    		'quantity.*' => 'required|integer',
+    		'quantity.*' => 'required|integer|min:1',
     		'user' => 'required|exists:users,name'
     		]);
 	   	list($_products, $quantity) = $this->inputForge();
@@ -47,7 +47,7 @@ class OrderController extends Controller
     public function update(Order $order){
     	$this->validate(request(),[
     		'products.*' => 'required|exists:products,name',
-    		'quantity.*' => 'required|integer',
+    		'quantity.*' => 'required|integer|min:0',
     		'user' => 'required|exists:users,name'
     		]);
     	list($_products, $quantity)=$this->inputForge();

@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class Order extends Model
 {
-
     protected $total =0;
     protected $discount =0;
+    //used in filtering based on product name
+    protected $orders_id=array();
 
     public function products()
     {
@@ -80,11 +81,17 @@ class Order extends Model
     }
 
     public function filter(){
-        $users = User::has('orders')->get();
+        $users = User::whereHas('orders',function($query){
+          $query->latest();  
+        })->get();
+        $arrUsers=$users->toArray();
         if(request('time') !==null && request('term') !== null){
-            if(User::where('name','=',request('term'))->first()){
+            //both time and term for search are used
+            if(in_array(request('term'), array_column($arrUsers, 'name'))){
+                //search term is an user that has orders
                 $users=User::where('name','=',request('term'))->get();
                 if(request('time') !='all'){
+                    //specific time eager load for specific user
                     $users->load([
                         'orders' => function ($query) {
                         $query->where('updated_at', '>=', new Carbon(request('time')));
@@ -93,16 +100,22 @@ class Order extends Model
                     ]);
                 }
                 else{
-                    $users->load('orders.products');
+                    //all time eager load for specific user
+                    $users->load(['orders'=>function($query){
+                        $query->latest();
+                    },
+                    'orders.products']);
                 }
             }
             elseif($product=Product::where('name','=',request('term'))->first()){
-                setOrderId($product->orders);               
+                //search term is a product
+                $this->getOrdersIdBasedOnProduct($product);
                 if(request('time')!='all'){
+                    //in speicfic time eager load of the searched product
                     $users->load([
                         'orders' => function($query){
                             $query->whereIn('id',$this->orders_id)
-                                  ->where('updated_at', '>=', new Carbon(request('time')));
+                                  ->where('updated_at', '>=', new Carbon(request('time')))->latest();
                             },
                         'orders.products'
                     ]);
@@ -110,25 +123,44 @@ class Order extends Model
                 else {
                     $users->load([
                         'orders' => function($query){
-                            $query->whereIn('id',$this->orders_id);},
+                            $query->whereIn('id',$this->orders_id)->latest();},
                         'orders.products'
                         ]);
                 }
             }
-        }
-
-        else{
-            if(request('time') != 'all' && request('time') !==null)
-            $users->load([
-                'orders'=>function($query) {
-                    $query->where('updated_at','>=',new Carbon(request('time')));}, 
-                'orders.products'
-                ]);
             else {
-                $users = User::has('orders.products')->get();
+                $users=null;
             }
         }
-
+        else{
+            if(request('time') != 'all' && request('time') !==null){
+            $users->load([
+                'orders'=>function($query) {
+                    $query->where('updated_at','>=',new Carbon(request('time')))->latest();}, 
+                'orders.products'
+                ]);
+            }
+            else {
+                $users->load(['orders'=>function($query){
+                    $query->latest();
+                },
+                'orders.products']);
+            }
+        }
+         for($i=0; $i<count($users); $i++) {
+             if(!$users[$i] || $users[$i]->orders->isEmpty()){
+                unset($users[$i]);    
+            }
+        }
+      
         return $users;
+    }
+
+    protected function getOrdersIdBasedOnProduct(Product $product){
+        $orders=$product->orders;
+        foreach ($orders as $order) {
+            $orders_id[]=$order->id;
+        }
+        $this->orders_id = $orders_id;
     }
 }

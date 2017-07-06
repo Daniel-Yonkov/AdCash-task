@@ -14,6 +14,7 @@
             </tr>
           </thead>
           <tbody>
+          @if($results)
           @foreach($results as $user)
             @foreach($user->orders as $order)
             <tr>
@@ -55,6 +56,7 @@
               @endforeach
             </tr>
           @endforeach
+        @endif
           </tbody>
         </table>
       </div>
