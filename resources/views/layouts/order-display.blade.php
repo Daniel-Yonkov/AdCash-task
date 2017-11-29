@@ -15,10 +15,9 @@
           </thead>
           <tbody>
           @if($results)
-          @foreach($results as $user)
-            @foreach($user->orders as $order)
+          @foreach($results as $order)
             <tr>
-              <td>{{$user->name}}</td>
+              <td>{{$order->user->name}}</td>
               <td>
                 <table class="table table-sm">
                 @foreach($order->products as $product)
@@ -53,7 +52,6 @@
                     Delete
                     </a>
                 </td>
-              @endforeach
             </tr>
           @endforeach
         @endif

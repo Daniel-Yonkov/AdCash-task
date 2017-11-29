@@ -5,48 +5,19 @@ namespace App\Http\Controllers;
 use App\Order;
 use App\Product;
 use App\User;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
     public function index()
-    {       
-            $users=User::all();
-            $products = Product::all();
-            $results = collect([]);
-            $usersWithOrders= User::whereHas('orders')->get();
-            $user = request('term')!==null? User::where('name',request('term'))->get(): collect([]);
-            $product = request('term')!==null? Product::where('name',request('term'))->get(): collect([]);
-            $time= request('time')??request('time');
-            if($user->isNotEmpty()){
-                if($time!== null){
-                    $results = $user->userOrdersFilter($time);    
-                }
-                else {
-                    $results = $user->userOrdersFilter();
-                }
-            }
-            elseif($product->isNotEmpty()){
-                if($time!==null){
-                    foreach($usersWithOrders as $user){
-                        $results[] = $user->userOrderProductFilter($product[0], $time);
-                    }
-                }
-                else {
-                    foreach ($usersWithOrders as $user) {
-                        $results[] = $user->userOrderProductFilter($product[0]);
-                    }
-                }
-            }
-            else {
-                if(($time!==null && request('term') === null) || ($time === null && request('term') === null)){
-                    foreach ($usersWithOrders as $user) {
-                        $results[] = $user->userOrdersFilter();
-                    }
-                }
-            }
-    	
-    	// $results = Order::allOrders();
-    	return view('welcome', compact('users', 'products', 'results'));
+    {   $users=User::all();
+        $products = Product::all();
+        $time = null; // no time filtering default
+        if(request('time') !== null && request('time') !== "all" ){
+            $time = new Carbon(request('time'));
+        }
+        $results = Order::orderFilter(request('term'), $time);
+        return view('welcome',compact('results','users','products'));
     }
 
     public function store()
