@@ -87,6 +87,7 @@ class Order extends Model
         $filter = null;
 
         if($term) {
+
             $user = User::where('name',$term)->get();
             $product = Product::where('name', $term)->get();
             if($user->isNotEmpty()){
